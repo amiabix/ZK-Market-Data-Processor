@@ -32,10 +32,10 @@
 
 ```
 sha_hasher/
-├── build.rs              # Writes build/input.bin (public + private)
+├── build.rs              # Writes public.bin (public) and private.bin (private)
 ├── Cargo.toml
-├── build/
-│   └── input.bin         # Binary input (public + private)
+├── public.bin            # Public input (e.g., number of hash rounds)
+├── private.bin           # Private input (e.g., secret value)
 ├── src/
 │   └── main.rs           # Main program logic
 └── ...
@@ -45,20 +45,18 @@ sha_hasher/
 
 ## Standardized Input Format
 
-- **Bytes 0..8:**   Public input (u64, little-endian)
-- **Bytes 8..40:**  Private input ([u8; 32])
-
-> **Note:** For ergonomic and reusable parsing, we use a generic helper function to extract fields from the input buffer.
+- **public.bin:** 8 bytes, little-endian u64 (public input)
+- **private.bin:** 32 bytes ([u8; 32], private input)
 
 **Summary Table:**
-| Bytes         | Meaning         | How to Read in Rust                        |
-|---------------|----------------|--------------------------------------------|
-| 0..8          | Public input n  | `u64::from_le_bytes(extract_array::<8>(&input, 0))`         |
-| 8..40         | Private secret  | `extract_array::<32>(&input, 8)`           |
+| File         | Bytes         | Meaning         | How to Read in Rust                        |
+|--------------|--------------|----------------|--------------------------------------------|
+| public.bin   | 0..8          | Public input n  | `u64::from_le_bytes(pub_input)`            |
+| private.bin  | 0..32         | Private secret  | `private_input` as `[u8; 32]`              |
 
 **Example:**
 - `n = 5` (public) → `[0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]`
-- `secret = [42; 32]` (private) → 32 bytes, all 42
+- `secret = [255; 32]` (private) → 32 bytes, all 255
 
 ---
 
@@ -66,73 +64,53 @@ sha_hasher/
 
 Suppose you want to set:
 - **Public input:** `n = 5`
-- **Private input:** 32 bytes, all set to `42`
+- **Private input:** 32 bytes, all set to `255`
 
 ### How `build.rs` writes the inputs
 
 ```rust
 let n: u64 = 5; // public input
-let secret: [u8; 32] = [42; 32]; // private input
+let secret: [u8; 32] = [255; 32]; // private input
 
-let mut file = File::create("build/input.bin")?;
-file.write_all(&n.to_le_bytes())?; // Bytes 0..8: public input
-file.write_all(&secret)?;          // Bytes 8..40: private input
+let mut pub_file = File::create("public.bin")?;
+pub_file.write_all(&n.to_le_bytes())?;
+
+let mut priv_file = File::create("private.bin")?;
+priv_file.write_all(&secret)?;
 ```
 
-### How `main.rs` reads the inputs (using a generic helper)
+### How `main.rs` reads the inputs
 
 ```rust
-/// Extracts a fixed-size array from a byte slice at a given offset.
-fn extract_array<const N: usize>(input: &[u8], start: usize) -> [u8; N] {
-    let mut arr = [0u8; N];
-    arr.copy_from_slice(&input[start..start + N]);
-    arr
-}
+let mut pub_input = [0u8; 8];
+File::open("public.bin").expect("public.bin not found").read_exact(&mut pub_input).expect("Failed to read public.bin");
+let n = u64::from_le_bytes(pub_input);
 
-let n = u64::from_le_bytes(extract_array::<8>(&input, 0)); // public input
-let mut hash = extract_array::<32>(&input, 8);             // private input
+let mut hash = [0u8; 32];
+File::open("private.bin").expect("private.bin not found").read_exact(&mut hash).expect("Failed to read private.bin");
 ```
-
-### Summary Table
-
-| Bytes   | Meaning         | How to Read in Rust                        |
-|---------|----------------|--------------------------------------------|
-| 0..8    | Public input n  | `u64::from_le_bytes(extract_array::<8>(&input, 0))`         |
-| 8..40   | Private secret  | `extract_array::<32>(&input, 8)`           |
 
 ---
 
 ## How Values Are Written and Referenced
 
-### How `build.rs` Writes to `input.bin`
-- `build.rs` writes the public input (`n`) as the first 8 bytes (little-endian u64).
-- It then writes the private input (`secret`) as the next 32 bytes.
-- The resulting file, `build/input.bin`, always has the same structure:
-  - Bytes 0..8: public input
-  - Bytes 8..40: private input
+### How `build.rs` Writes to `public.bin` and `private.bin`
+- `build.rs` writes the public input (`n`) as 8 bytes (little-endian u64) to `public.bin`.
+- It writes the private input (`secret`) as 32 bytes to `private.bin`.
 
-### How `main.rs` References Values from `input.bin`
-- `main.rs` opens and reads `build/input.bin` into a byte buffer.
-- It extracts the public input with:
-  ```rust
-  let n = u64::from_le_bytes(extract_array::<8>(&input, 0));
-  ```
-- It extracts the private input with:
-  ```rust
-  let mut hash = extract_array::<32>(&input, 8);
-  ```
-- This ensures the program always knows exactly where to find each value, making the code robust and easy to maintain.
+### How `main.rs` References Values
+- `main.rs` reads 8 bytes from `public.bin` and interprets them as `n`.
+- It reads 32 bytes from `private.bin` and uses them as the secret value.
 
 ---
 
 ## How It Works
 
 1. **Edit `build.rs`** to set your public and private values.
-2. **Run `cargo build` or `cargo run`** to generate `build/input.bin`.
+2. **Run `cargo build` or `cargo run`** to generate `public.bin` and `private.bin`.
 3. **Run the main program** (`cargo run`):
-   - Reads `build/input.bin`
-   - Uses the first 8 bytes as the public input (`n`)
-   - Uses the next 32 bytes as the private input (secret)
+   - Reads `public.bin` and `private.bin`
+   - Uses the public input (`n`) and private input (secret)
    - Hashes the secret `n` times
    - Outputs the final hash in 8 public 32-bit chunks
 
@@ -143,7 +121,7 @@ let mut hash = extract_array::<32>(&input, 8);             // private input
 ### 1. Set your inputs in `build.rs`
 ```rust
 let n: u64 = 5; // public input
-let secret: [u8; 32] = [42; 32]; // private input
+let secret: [u8; 32] = [255; 32]; // private input
 ```
 
 ### 2. Build the project
@@ -161,11 +139,11 @@ cargo run
 ## Code Walkthrough
 
 ### build.rs
-- Writes `build/input.bin` in the standardized format: public input first, then private input.
+- Writes `public.bin` (public input) and `private.bin` (private input) in a clear, separated format.
 
 ### main.rs
-- Reads `build/input.bin`
-- Uses the `extract_array` helper to extract public and private values by byte offset
+- Reads `public.bin` and `private.bin`
+- Uses the public input (`n`) and private input (secret)
 - Hashes the private value `n` times
 - Outputs the final hash in 8 public 32-bit chunks
 
