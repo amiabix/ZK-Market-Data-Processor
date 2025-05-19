@@ -1,9 +1,6 @@
 use std::fs::File;
 use std::io::{self, Write};
 
-// Standardized input.bin format:
-// Bytes 0..8:   Public input (u64, little-endian)
-// Bytes 8..40:  Private input ([u8; 32])
 
 fn main() -> io::Result<()> {
     let n: u64 = 5; // public input
