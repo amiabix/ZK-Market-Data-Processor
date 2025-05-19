@@ -1,17 +1,16 @@
-use std::fs::File;
-use std::io::Read;
+#![no_main]
+ziskos::entrypoint!(main);
+
+use ziskos::{read_input, set_output};
 use sha2::{Digest, Sha256};
-use byteorder::ByteOrder;
+use std::convert::TryInto;
 
 fn main() {
-    // Read public input
-    let mut pub_input = [0u8; 8];
-    File::open("public.bin").expect("public.bin not found").read_exact(&mut pub_input).expect("Failed to read public.bin");
-    let n = u64::from_le_bytes(pub_input);
-
-    // Read private input
+    // Read the input data as a byte array from ZisK
+    let input: Vec<u8> = read_input();
+    let n = u64::from_le_bytes(input[0..8].try_into().unwrap());
     let mut hash = [0u8; 32];
-    File::open("private.bin").expect("private.bin not found").read_exact(&mut hash).expect("Failed to read private.bin");
+    hash.copy_from_slice(&input[8..40]);
 
     // Compute SHA-256 hashing 'n' times
     for _ in 0..n {
@@ -23,7 +22,7 @@ fn main() {
 
     // Output the final hash in 8 chunks (public output)
     for i in 0..8 {
-        let val = byteorder::BigEndian::read_u32(&hash[i * 4..i * 4 + 4]);
-        println!("public {}: 0x{:08x}", i, val);
+        let val = u32::from_be_bytes(hash[i * 4..i * 4 + 4].try_into().unwrap());
+        set_output(i, val);
     }
 } 
