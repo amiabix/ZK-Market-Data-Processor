@@ -2,12 +2,14 @@ use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::Path;
 
-// Define constants for the directory and input file name
+// Standardized input.bin format:
+// Bytes 0..8:   Public input (u64, little-endian)
+// Bytes 8..40:  Private input ([u8; 32])
 const OUTPUT_DIR: &str = "build/";
 const FILE_NAME: &str = "input.bin";
 
 fn main() -> io::Result<()> {
-    let n: u64 = 10000000; // public input
+    let n: u64 = 5; // public input
     let secret: [u8; 32] = [42; 32]; // private input (all bytes are 42)
 
     // Ensure the output directory exists
