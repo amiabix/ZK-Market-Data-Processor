@@ -1,0 +1,8 @@
+{
+  "public": {
+    "n": 5
+  },
+  "private": {
+    "secret": "my secret message"
+  }
+}
