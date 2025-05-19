@@ -3,8 +3,14 @@
 use std::fs::File;
 use std::io::Read;
 use sha2::{Digest, Sha256};
-use std::convert::TryInto;
 use byteorder::ByteOrder;
+
+/// Extracts a fixed-size array from a byte slice at a given offset.
+fn extract_array<const N: usize>(input: &[u8], start: usize) -> [u8; N] {
+    let mut arr = [0u8; N];
+    arr.copy_from_slice(&input[start..start + N]);
+    arr
+}
 
 fn main() {
     // Standardized input.bin format:
@@ -13,9 +19,8 @@ fn main() {
     let mut input = Vec::new();
     File::open("build/input.bin").expect("input.bin not found").read_to_end(&mut input).expect("Failed to read input.bin");
 
-    let n = u64::from_le_bytes(input[0..8].try_into().unwrap()); // public input
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&input[8..40]); // private input
+    let n = u64::from_le_bytes(extract_array::<8>(&input, 0)); // public input
+    let mut hash = extract_array::<32>(&input, 8); // private input
 
     // Compute SHA-256 hashing 'n' times
     for _ in 0..n {
