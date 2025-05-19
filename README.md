@@ -1,8 +1,6 @@
-# ZisK: Standardized Public and Private Input Handling
+# ZisK: Public and Private Input Handling
 
-This project helps demonstrates the handling of **public and private inputs** in ZisK, In this example Public and private values are written in a fixed binary format by `build.rs` and read by the main program. This approach is simple, auditable, and easy to extend for small-to-medium projects.
-
-**TL;DR:** This project shows how to handle **public and private inputs** in ZisK.In this setup we use build.rs to work with both public and private values in a simple binary format, which the main program then reads and works with.
+**TL;DR:** This project shows how to handle **public and private inputs** in ZisK. In this setup we use build.rs to work with both public and private values in a simple binary format, which the main program then reads and works with.
 
 ---
 
@@ -22,7 +20,7 @@ This project helps demonstrates the handling of **public and private inputs** in
 
 ## Overview
 
-- **Purpose:** Demonstrate best practices for securely handling public and private inputs in a computation witb ZisK.
+- **Purpose:** Demonstrate best practices for handling public and private inputs with ZisK.
 - **Public input:** Number of hash rounds (`n`)
 - **Private input:** A secret value (32 bytes)
 - **Goal:** Hash the private value `n` times using SHA-256, and output the final hash (split into 8 public values).
