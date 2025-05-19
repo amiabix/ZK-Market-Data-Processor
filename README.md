@@ -8,6 +8,7 @@ This project demonstrates a standardized approach for handling **public and priv
 - [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Standardized Input Format](#standardized-input-format)
+- [How Values Are Written and Referenced](#how-values-are-written-and-referenced)
 - [How It Works](#how-it-works)
 - [Setup & Usage](#setup--usage)
 - [Code Walkthrough](#code-walkthrough)
@@ -47,6 +48,36 @@ sha_hasher/
 **Example:**
 - `n = 5` (public) → `[0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]`
 - `secret = [42; 32]` (private) → 32 bytes, all 42
+
+---
+
+## How Values Are Written and Referenced
+
+### How `build.rs` Writes to `input.bin`
+- `build.rs` writes the public input (`n`) as the first 8 bytes (little-endian u64).
+- It then writes the private input (`secret`) as the next 32 bytes.
+- The resulting file, `build/input.bin`, always has the same structure:
+  - Bytes 0..8: public input
+  - Bytes 8..40: private input
+
+### How `main.rs` References Values from `input.bin`
+- `main.rs` opens and reads `build/input.bin` into a byte buffer.
+- It extracts the public input with:
+  ```rust
+  let n = u64::from_le_bytes(input[0..8].try_into().unwrap());
+  ```
+- It extracts the private input with:
+  ```rust
+  let mut hash = [0u8; 32];
+  hash.copy_from_slice(&input[8..40]);
+  ```
+- This ensures the program always knows exactly where to find each value, making the code robust and easy to maintain.
+
+**Summary Table:**
+| Bytes         | Meaning         | How to Read in Rust                        |
+|---------------|----------------|--------------------------------------------|
+| 0..8          | Public input n  | `u64::from_le_bytes(&input[0..8])`         |
+| 8..40         | Private secret  | `input[8..40]` as `[u8; 32]`               |
 
 ---
 
