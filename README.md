@@ -2,6 +2,8 @@
 
 This project helps demonstrates the handling of **public and private inputs** in ZisK, In this example Public and private values are written in a fixed binary format by `build.rs` and read by the main program. This approach is simple, auditable, and easy to extend for small-to-medium projects.
 
+**TL;DR:** This project shows how to handle **public and private inputs** in ZisK.In this setup we use build.rs to work with both public and private values in a simple binary format, which the main program then reads and works with.
+
 ---
 
 ## Table of Contents
