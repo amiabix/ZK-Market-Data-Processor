@@ -1,11 +1,12 @@
 # ZisK: Public and Private Input Handling
 
-**TL;DR:** This project shows an example on how to handle **public and private inputs** in ZisK. In this setup we use build.rs to work with both public and private values in a simple binary format, which the main program then reads and works with using the ZisK API.
+**TL;DR:** This project demonstrates best practices for handling **public and private inputs** in ZisK. `build.rs` writes public and private values to separate binary files, which are then concatenated into a single input buffer for the ZisK program. The main program reads and processes these using the ZisK API.
 
 ---
 
 ## Table of Contents
 - [Overview](#overview)
+- [Quick Reference](#quick-reference)
 - [Project Structure](#project-structure)
 - [Standardized Input Format](#standardized-input-format)
 - [Reference Example](#reference-example)
@@ -26,6 +27,23 @@
 - **Goal:** Hash the private value `n` times using SHA-256, and output the final hash (split into 8 public values).
 - **Privacy:** The secret is never revealed in outputs or logs.
 - **ZisK compatibility:** The main program uses `#![no_main]`, `ziskos::entrypoint!(main)`, `read_input()`, and `set_output()` as required by ZisK for provable programs.
+
+---
+
+## Quick Reference
+
+| File         | Role           | Format/Bytes         | Notes                                  |
+|--------------|----------------|----------------------|----------------------------------------|
+| public.bin   | Public input   | 8 bytes (u64 LE)     | Number of hash rounds (`n`)            |
+| private.bin  | Private input  | 32 bytes ([u8; 32])  | Secret value                           |
+| input.bin    | ZisK input     | 40 bytes             | Concatenation: public.bin + private.bin|
+
+> **ZisK Input Buffer Requirement:**
+> - ZisK expects a single input buffer. Before running the program, **concatenate** `public.bin` and `private.bin` (in that order) to create `input.bin`:
+>   ```sh
+>   cat public.bin private.bin > input.bin
+>   ```
+> - Only the public input is standardized by ZisK; private input handling is flexible and up to the user.
 
 ---
 
@@ -50,7 +68,6 @@ sha_hasher/
 - **private.bin:** 32 bytes ([u8; 32], private input)
 - **ZisK input buffer:** The program expects a single buffer with public input first, then private input (e.g., 8 bytes + 32 bytes = 40 bytes total).
 
-**Summary Table:**
 | File         | Bytes         | Meaning         | How to Read in Rust                        |
 |--------------|--------------|----------------|--------------------------------------------|
 | public.bin   | 0..8          | Public input n  | `u64::from_le_bytes(input[0..8])`          |
@@ -171,6 +188,7 @@ cat public.bin private.bin > input.bin
 - Only the public input and the final hash are output (via `set_output`).
 - This approach is simple and effective for most small-to-medium projects.
 - **Note:** For ZisK, all public outputs must be set using `set_output()`.
+- **Flexibility:** ZisK only standardizes public input; you are free to structure and parse private input as needed for your application.
 
 ---
 
