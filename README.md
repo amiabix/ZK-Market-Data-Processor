@@ -1,4 +1,4 @@
-# ZK Market Data Processor - Simple Zero-Knowledge Proof Example
+# ZK Market Data Processor - ZisK Dynamic Data Example
 
 A minimal zero-knowledge proof example that processes market data and generates cryptographic proofs while keeping the processing logic private.
 
