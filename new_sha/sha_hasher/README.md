@@ -1,4 +1,4 @@
-# ZK Market Data Processor - Simple Zero-Knowledge Proof Example
+# ZisK Dynamic data fetch
 
 A minimal zero-knowledge proof example that processes market data and generates cryptographic proofs while keeping the processing logic private.
 
@@ -162,35 +162,20 @@ while true; do
 done
 ```
 
-## 📡 Data Source
+##  Data Source
 
 - **API**: CoinGecko Ethereum Price API
 - **Endpoint**: `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true`
 - **Rate Limit**: Free tier (may hit limits with frequent builds)
 - **Fallback**: Currently uses `.unwrap()` - may panic on API failures
 
-## 🔒 Zero-Knowledge Features
-
-### What's Public
-- Trading signal (BUY/SELL/HOLD)
-- Risk level assessment
-- ETH price (rounded)
-- Timestamp of analysis
-
-### What's Private
-- Exact price in cents
-- Exact 24h change value
-- Trading thresholds (-5%, +3%)
-- Algorithm logic details
-- Risk calculation method
-
-## 💡 Why This Approach Works
+## Why This Approach Works
 
 The beauty of this method is that your main ZisK program doesn't need to change at all - it simply processes whatever current data is available in the file. This creates a seamless pipeline where each build cycle produces a fresh snapshot of real-world data, and each subsequent proof demonstrates correct computation on that specific moment in time.
 
 The timestamp ensures verifiers can see exactly when each analysis was performed, providing full transparency about data freshness.
 
-## 📦 Dependencies
+## Dependencies
 
 ### Build Dependencies
 - `reqwest` - HTTP client for API calls
@@ -202,7 +187,7 @@ The timestamp ensures verifiers can see exactly when each analysis was performed
 - `byteorder` - Byte order utilities (unused in current version)
 - `sha2` - SHA hashing (unused in current version)
 
-## 🛠️ Development
+## Development
 
 ### Adding New Features
 
@@ -235,35 +220,5 @@ let eth_price = data["ethereum"]["usd"]
     .as_f64()
     .ok_or("Failed to get ETH price")?;
 ```
-
-## 🚨 Limitations
-
-1. **API Rate Limits**: CoinGecko free tier has rate limits
-2. **Error Handling**: Minimal error handling (may panic on API failures)
-3. **Trading Strategy**: Simple momentum-based (not financial advice)
-4. **Data Freshness**: Only updates on `cargo build`
-
-## 🔮 Future Enhancements
-
-- [ ] Add multiple data sources
-- [ ] Implement more sophisticated trading algorithms
-- [ ] Add proper error handling and fallbacks
-- [ ] Support for multiple cryptocurrencies
-- [ ] Historical data analysis
-- [ ] Risk management features
-
-## 📄 License
-
-This project is for educational purposes. The trading algorithm is not financial advice.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with `cargo build && cargo run`
-5. Submit a pull request
-
----
 
 **Note**: This is a demonstration project. Do not use for actual trading without proper testing and risk management. 
